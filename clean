@@ -62,16 +62,16 @@ NR == 1 {
         next
     }
 
-    # Skip rows that contain any empty field
-    has_empty_field = 0
+    # Trim spaces from all fields
     for (i = 1; i <= NF; i++) {
-        if ($i == "") {
-            has_empty_field = 1
-        }
+        gsub(/^[ \t\r\n]+|[ \t\r\n]+$/, "", $i)
     }
 
-    if (has_empty_field == 1) {
-        next
+    # Skip rows that contain any empty field
+    for (i = 1; i <= NF; i++) {
+        if ($i == "") {
+            next
+        }
     }
 
     # Skip rows where likes or dislikes are zero
