@@ -5,35 +5,27 @@
 
 input_file="$1"
 
-# Check if no input file was provided
 if [ -z "$input_file" ]; then
     echo "ERROR: No input CSV file provided"
     exit 1
 fi
 
-# Check if the file exists
 if [ ! -f "$input_file" ]; then
     echo "ERROR: Input file not found in the current directory"
     exit 1
 fi
 
-# Check if the file is a CSV file
 if [[ "$input_file" != *.csv ]]; then
     echo "ERROR: Input file expected in a CSV format"
     exit 1
 fi
 
-# Check if the file is empty
 if [ ! -s "$input_file" ]; then
     echo "ERROR: Empty file provided"
     exit 1
 fi
 
 awk -F',' '
-BEGIN {
-    OFS = ","
-}
-
 NR > 1 {
     video_id = $1
     publish_date = $2
@@ -41,53 +33,77 @@ NR > 1 {
     likes = $4 + 0
     dislikes = $5 + 0
 
-    # Count occurrences of each video ID
     video_count[video_id]++
 
-    # Calculate total views for mean
     total_views += views
     row_count++
 
-    # Find video with maximum dislikes
     if (row_count == 1 || dislikes > max_dislikes) {
         max_dislikes = dislikes
-        max_dislikes_id = video_id
+        delete max_dislikes_rows
+        max_dislikes_rows[video_id] = 1
+    } else if (dislikes == max_dislikes) {
+        max_dislikes_rows[video_id] = 1
     }
 
-    # Calculate engagement rate
     engagement_rate = (likes + dislikes) / views
 
     if (row_count == 1 || engagement_rate > highest_engagement_rate) {
         highest_engagement_rate = engagement_rate
-        highest_engagement_id = video_id
-        highest_engagement_date = publish_date
+        delete highest_engagement_rows
+        highest_engagement_rows[video_id "," publish_date] = 1
+    } else if (engagement_rate == highest_engagement_rate) {
+        highest_engagement_rows[video_id "," publish_date] = 1
     }
 
-    # Calculate net sentiment rate
     sentiment_rate = (likes - dislikes) / views
 
     if (row_count == 1 || sentiment_rate < least_sentiment_rate) {
         least_sentiment_rate = sentiment_rate
-        least_sentiment_id = video_id
-        least_sentiment_date = publish_date
+        delete least_sentiment_rows
+        least_sentiment_rows[video_id "," publish_date] = 1
+    } else if (sentiment_rate == least_sentiment_rate) {
+        least_sentiment_rows[video_id "," publish_date] = 1
     }
 }
 
 END {
-    # Find most frequent video ID
     for (id in video_count) {
         if (video_count[id] > most_frequent_count) {
             most_frequent_count = video_count[id]
-            most_frequent_id = id
+            delete most_frequent_rows
+            most_frequent_rows[id] = 1
+        } else if (video_count[id] == most_frequent_count) {
+            most_frequent_rows[id] = 1
         }
     }
 
     mean_views = total_views / row_count
 
-    printf "Most frequent video, ID: %s\n", most_frequent_id
+    first = 1
+    for (id in most_frequent_rows) {
+        if (first == 1) {
+            printf "Most frequent video, ID: %s\n", id
+            first = 0
+        } else {
+            printf "Most frequent video, ID: %s\n", id
+        }
+    }
+
     printf "Mean number of views: %.2f\n", mean_views
-    printf "Max dislikes video, ID: %s\n", max_dislikes_id
-    printf "Highest engagement rate video, ID: %s, dated: %s\n", highest_engagement_id, highest_engagement_date
-    printf "Least sentiment rate video, ID: %s, dated: %s\n", least_sentiment_id, least_sentiment_date
+
+    for (id in max_dislikes_rows) {
+        printf "Max dislikes video, ID: %s\n", id
+    }
+
+    for (row in highest_engagement_rows) {
+        split(row, parts, ",")
+        printf "Highest engagement rate video, ID: %s, dated: %s\n", parts[1], parts[2]
+    }
+
+    for (row in least_sentiment_rows) {
+        split(row, parts, ",")
+        printf "Least sentiment rate video, ID: %s, dated: %s\n", parts[1], parts[2]
+    }
 }
 ' "$input_file"
