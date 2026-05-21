@@ -5,4 +5,37 @@
 
 input_file="$1"
 
-echo "clean script received file: $input_file"
+# 1. Check if no input file was provided
+if [ -z "$input_file" ]; then
+    echo "ERROR: No input CSV file provided"
+    exit 1
+fi
+
+# 2. Check if the file exists in the current directory
+if [ ! -f "$input_file" ]; then
+    echo "ERROR: Input file not found in the current directory"
+    exit 1
+fi
+
+# 3. Check if the file has a .csv extension
+if [[ "$input_file" != *.csv ]]; then
+    echo "ERROR: Input file expected in a CSV format"
+    exit 1
+fi
+
+# 4. Check if the file is empty
+if [ ! -s "$input_file" ]; then
+    echo "ERROR: Empty file provided"
+    exit 1
+fi
+
+# 5. Check if the header has exactly 7 columns
+header_column_count=$(head -n 1 "$input_file" | awk -F',' '{print NF}')
+
+if [ "$header_column_count" -ne 7 ]; then
+    echo "ERROR: Expected 7 columns in the header"
+    exit 1
+fi
+
+# If all checks pass for now
+echo "Input file passed all error checks"
