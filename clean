@@ -1,0 +1,8 @@
+#!/bin/bash
+
+# Question 1: Data cleaning script
+# Usage: ./clean trending_videos_unclean.csv
+
+input_file="$1"
+
+echo "clean script received file: $input_file"
