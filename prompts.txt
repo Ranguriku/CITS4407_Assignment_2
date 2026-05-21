@@ -1,0 +1,16 @@
+AI Prompt Log
+
+This assignment used AI assistance for understanding the project requirements, planning the workflow, setting up Git, writing and testing Bash scripts, creating a README file, and preparing final submission steps.
+
+Main prompts used included:
+
+1. Understanding the assignment requirements and submission structure.
+2. Setting up the project folder using WSL, Git, and GitHub.
+3. Creating and testing the clean script.
+4. Adding error handling to the clean script.
+5. Implementing data cleaning using awk.
+6. Testing removal of empty fields, duplicate rows, zero likes/dislikes, and the ratings_disabled column.
+7. Creating and testing the analyse script.
+8. Calculating most frequent video ID, mean views, maximum dislikes, engagement rate, and sentiment rate.
+9. Updating the README file.
+10. Preparing final submission files including git_backup and zip file.
