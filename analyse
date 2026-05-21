@@ -5,4 +5,89 @@
 
 input_file="$1"
 
-echo "analyse script received file: $input_file"
+# Check if no input file was provided
+if [ -z "$input_file" ]; then
+    echo "ERROR: No input CSV file provided"
+    exit 1
+fi
+
+# Check if the file exists
+if [ ! -f "$input_file" ]; then
+    echo "ERROR: Input file not found in the current directory"
+    exit 1
+fi
+
+# Check if the file is a CSV file
+if [[ "$input_file" != *.csv ]]; then
+    echo "ERROR: Input file expected in a CSV format"
+    exit 1
+fi
+
+# Check if the file is empty
+if [ ! -s "$input_file" ]; then
+    echo "ERROR: Empty file provided"
+    exit 1
+fi
+
+awk -F',' '
+BEGIN {
+    OFS = ","
+}
+
+NR > 1 {
+    video_id = $1
+    publish_date = $2
+    views = $3 + 0
+    likes = $4 + 0
+    dislikes = $5 + 0
+
+    # Count occurrences of each video ID
+    video_count[video_id]++
+
+    # Calculate total views for mean
+    total_views += views
+    row_count++
+
+    # Find video with maximum dislikes
+    if (row_count == 1 || dislikes > max_dislikes) {
+        max_dislikes = dislikes
+        max_dislikes_id = video_id
+    }
+
+    # Calculate engagement rate
+    engagement_rate = (likes + dislikes) / views
+
+    if (row_count == 1 || engagement_rate > highest_engagement_rate) {
+        highest_engagement_rate = engagement_rate
+        highest_engagement_id = video_id
+        highest_engagement_date = publish_date
+    }
+
+    # Calculate net sentiment rate
+    sentiment_rate = (likes - dislikes) / views
+
+    if (row_count == 1 || sentiment_rate < least_sentiment_rate) {
+        least_sentiment_rate = sentiment_rate
+        least_sentiment_id = video_id
+        least_sentiment_date = publish_date
+    }
+}
+
+END {
+    # Find most frequent video ID
+    for (id in video_count) {
+        if (video_count[id] > most_frequent_count) {
+            most_frequent_count = video_count[id]
+            most_frequent_id = id
+        }
+    }
+
+    mean_views = total_views / row_count
+
+    printf "Most frequent video, ID: %s\n", most_frequent_id
+    printf "Mean number of views: %.2f\n", mean_views
+    printf "Max dislikes video, ID: %s\n", max_dislikes_id
+    printf "Highest engagement rate video, ID: %s, dated: %s\n", highest_engagement_id, highest_engagement_date
+    printf "Least sentiment rate video, ID: %s, dated: %s\n", least_sentiment_id, least_sentiment_date
+}
+' "$input_file"
